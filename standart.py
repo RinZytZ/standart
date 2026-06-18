@@ -1,25 +1,12 @@
 import discord
 from discord.ext import commands
 import asyncio
-import random
 import os
 
 TOKEN = os.getenv("API_TOKEN")
 ADMIN_ID = 991057181677850694
 
-PREFIX = "всодд-"
-
-# Гифки для команды "огонь"
-FIRE_GIFS = [
-    "https://tenor.com/view/soviet-gas-mask-assault-military-gif-22381336",
-    "https://tenor.com/view/soviet-union-tanks-ussr-cccp-russia-gif-9739824583956641130"
-]
-
-# Гифки для команды "парад"
-PARADE_GIFS = [
-    "https://tenor.com/view/east-germany-national-people%27s-army-ddr-germany-gdr-gif-19915374299296063",
-    "https://tenor.com/view/east-germany-national-people%27s-army-ddr-germany-gdr-gif-7980861786812559513"
-]
+PREFIX = "лейт-"
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -33,58 +20,79 @@ def is_admin(ctx):
 
 @bot.event
 async def on_ready():
-    print(f"⭐ {bot.user} — Генерал ВС ОДД готов!")
+    print(f"⭐ {bot.user} — Лейтенант Белов готов!")
 
-@bot.command(name="огонь")
-async def fire(ctx):
+@bot.command(name="приказ")
+async def order(ctx, *, text: str):
     if not is_admin(ctx):
         return
-    gif = random.choice(FIRE_GIFS)
-    await ctx.send(f"@everyone {gif}")
+    await ctx.send(f"⭐ **ПРИКАЗ КОМАНДОВАНИЯ:**\n{text}")
 
-@bot.command(name="ликвидировать")
-async def liquidate(ctx, member: discord.Member):
+@bot.command(name="доклад")
+async def report(ctx):
     if not is_admin(ctx):
         return
+    
+    guild = ctx.guild
+    members = guild.member_count
+    channels = len(guild.channels)
+    roles = len(guild.roles)
+    
+    await ctx.send(
+        f"⭐ **ДОКЛАД ПО ОБСТАНОВКЕ:**\n"
+        f"👥 Личный состав: {members}\n"
+        f"📡 Каналов: {channels}\n"
+        f"🎖 Ролей: {roles}"
+    )
+
+@bot.command(name="назначить")
+async def assign_role(ctx, member: discord.Member, *, role_name: str):
+    if not is_admin(ctx):
+        return
+    
+    role = discord.utils.get(ctx.guild.roles, name=role_name)
+    if not role:
+        await ctx.send(f"⭐ Роль `{role_name}` не найдена.")
+        return
+    
     try:
-        await member.kick(reason="Ликвидация по приказу командования")
-        await ctx.send(f"⭐ {member.mention} ликвидирован.")
+        await member.add_roles(role, reason="Назначение по приказу")
+        await ctx.send(f"⭐ {member.mention} назначен на должность `{role_name}`.")
     except:
-        await ctx.send("⭐ Ошибка. Проверь права.")
+        await ctx.send("⭐ Ошибка. Проверь права и роль.")
 
-@bot.command(name="зачистка")
-async def purge(ctx, amount: int):
-    if not is_admin(ctx):
-        return
-    if amount < 1 or amount > 100:
-        return
-    deleted = await ctx.channel.purge(limit=amount + 1)
-    await ctx.send(f"⭐ Зачистка завершена. Удалено {len(deleted)-1} сообщений.")
-
-@bot.command(name="парад")
-async def parade(ctx):
+@bot.command(name="снять")
+async def remove_role(ctx, member: discord.Member, *, role_name: str):
     if not is_admin(ctx):
         return
     
-    gif = random.choice(PARADE_GIFS)
+    role = discord.utils.get(ctx.guild.roles, name=role_name)
+    if not role:
+        await ctx.send(f"⭐ Роль `{role_name}` не найдена.")
+        return
     
-    await ctx.send(gif)
-    await asyncio.sleep(1)
-    await ctx.send(gif)
-    await asyncio.sleep(1)
-    await ctx.send(gif)
+    try:
+        await member.remove_roles(role, reason="Снятие по приказу")
+        await ctx.send(f"⭐ {member.mention} освобождён от должности `{role_name}`.")
+    except:
+        await ctx.send("⭐ Ошибка. Проверь права и роль.")
 
-@bot.command(name="отбой")
-async def standdown(ctx):
+@bot.command(name="есть")
+async def acknowledge(ctx):
     if not is_admin(ctx):
         return
-    await ctx.send("⭐ **ОТБОЙ.** Всем отдыхать.")
+    await ctx.send("⭐ Есть, товарищ генерал!")
 
-@bot.command(name="позывной")
-async def callsign(ctx):
+@bot.command(name="чисто")
+async def clean(ctx):
     if not is_admin(ctx):
         return
-    await ctx.send("⭐ Генерал ВС ОДД на связи.")
+    
+    def is_bot_message(msg):
+        return msg.author == bot.user
+    
+    deleted = await ctx.channel.purge(limit=100, check=is_bot_message)
+    await ctx.send(f"⭐ Следы заметены. Удалено {len(deleted)} сообщений.", delete_after=5)
 
 async def main():
     while True:
